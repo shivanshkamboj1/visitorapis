@@ -8,7 +8,7 @@ const app = express();
 const port = 4000;
 
 app.use(cors({
-    origin:["https://visitorapis.vercel.app","https://www.shivanshdev.site/"]
+    origin:["https://visitorapis-hy6o.vercel.app","https://www.shivanshdev.site"]
 }));
 app.use(express.json());
 
@@ -38,7 +38,10 @@ app.get('/api/visitor-count', async (req, res) => {
   const count = await Visitor.countDocuments();
   res.json({ visitorCount: count });
 });
-app.get('/',res.json({work:'api working'}))
+app.get('/', (req, res) => {
+  res.json({ work: 'api working' });
+});
+
 app.listen(port, () => {
   console.log(`✅ Server running at http://localhost:${port}`);
 });
