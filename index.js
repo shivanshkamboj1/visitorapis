@@ -16,21 +16,26 @@ app.use(express.json());
 connectDB();
 
 // Route to save and count unique visitors
-app.get('/api/visitor', async (req, res) => {
+app.post('/api/visitor', async (req, res) => {
   try {
-    const ip =
-      req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+    const { ip } = req.body;
+
+    if (!ip) {
+      return res.status(400).json({ error: 'IP address is required in the request body' });
+    }
 
     await Visitor.updateOne({ ip }, { $setOnInsert: { ip } }, { upsert: true });
 
     const count = await Visitor.countDocuments();
-    console.log('route hit')
+    console.log(`✅ Visitor IP recorded: ${ip}`);
+
     res.json({ message: 'IP recorded', visitorCount: count });
   } catch (err) {
-    console.error(err);
+    console.error('❌ Error recording visitor:', err);
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 
 // Get count only
