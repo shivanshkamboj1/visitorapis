@@ -38,7 +38,7 @@ app.get('/api/visitor-count', async (req, res) => {
   const count = await Visitor.countDocuments();
   res.json({ visitorCount: count });
 });
-
+app.get('/',res.json({work:'api working'}))
 app.listen(port, () => {
   console.log(`✅ Server running at http://localhost:${port}`);
 });
