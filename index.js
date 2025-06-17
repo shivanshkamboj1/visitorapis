@@ -31,7 +31,7 @@ app.post('/api/visitor', async (req, res) => {
       await doc.save();
     } else {
       // Check if the IP already exists
-      const alreadyExists =Visitor.findOneAndUpdate(ip, { $inc: { count: 1 }, $set: { lastVisited: new Date() } },
+      const alreadyExists =Visitor.findOneAndUpdate({ip}, { $inc: { count: 1 }, $set: { lastVisited: new Date() } },
         { new: true });
     }
 
