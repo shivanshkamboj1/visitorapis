@@ -24,9 +24,15 @@ app.post('/api/visitor', async (req, res) => {
       return res.status(400).json({ error: 'IP address is required in the request body' });
     }
 
-    await Visitor.updateOne({ ip }, { $setOnInsert: { ip } }, { upsert: true });
+    await Visitor.updateOne(
+      {}, // We use a single document to hold all visits
+      { $push: { visits: { ip } } },
+      { upsert: true }
+    );
 
-    const count = await Visitor.countDocuments();
+    const doc = await Visitor.findOne({});
+    const count = doc?.visits?.length || 0;
+
     console.log(`✅ Visitor IP recorded: ${ip}`);
 
     res.json({ message: 'IP recorded', visitorCount: count });
@@ -40,9 +46,11 @@ app.post('/api/visitor', async (req, res) => {
 
 // Get count only
 app.get('/api/visitor-count', async (req, res) => {
-  const count = await Visitor.countDocuments();
+  const doc = await Visitor.findOne({});
+  const count = doc?.visits?.length || 0;
   res.json({ visitorCount: count });
 });
+
 app.get('/', (req, res) => {
   res.json({ work: 'api working' });
 });
