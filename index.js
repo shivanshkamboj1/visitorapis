@@ -75,7 +75,11 @@ app.get('/api/visitor-list', async (req, res) => {
 app.get('/', (req, res) => {
   res.json({ work: 'api working' });
 });
-
+app.get('/visitor-show',async(req,res)=>{
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0];
+  console.log("User IP:", ip);
+  res.json({ status: "success", ip });
+})
 app.listen(port, () => {
   console.log(`✅ Server running at http://localhost:${port}`);
 });
