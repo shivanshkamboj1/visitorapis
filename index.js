@@ -18,32 +18,24 @@ connectDB();
 // Route to save and count unique visitors
 app.post('/api/visitor', async (req, res) => {
   try {
-    const { ip } = req.body;
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0];
 
     if (!ip) {
       return res.status(400).json({ error: 'IP address is required in the request body' });
     }
 
-    let doc = await Visitor.findOne({});
+    let doc = await Visitor.findOne({ip});
 
-    // If no document exists, create one and add the IP
     if (!doc) {
-      doc = new Visitor({ visits: [{ ip }] });
+      doc = new Visitor({ip});
       await doc.save();
     } else {
       // Check if the IP already exists
-      const alreadyExists = doc.visits.some(v => v.ip === ip);
-
-      if (!alreadyExists) {
-        doc.visits.push({ ip });
-        await doc.save();
-      }
+      const alreadyExists =Visitor.findOneAndUpdate(ip, { $inc: { count: 1 }, $set: { lastVisited: new Date() } },
+        { new: true });
     }
 
-    const count = doc.visits.length;
-    console.log(`✅ Visitor IP recorded: ${ip}`);
-
-    res.json({ message: 'IP recorded', visitorCount: count });
+    res.sendStatus(204); 
   } catch (err) {
     console.error('❌ Error recording visitor:', err);
     res.status(500).json({ error: 'Database error' });
@@ -55,15 +47,14 @@ app.post('/api/visitor', async (req, res) => {
 
 // Get count only
 app.get('/api/visitor-count', async (req, res) => {
-  const doc = await Visitor.findOne({});
-  const count = doc?.visits?.length || 0;
-  res.json({ visitorCount: count });
+  const count = await Visitor.countDocuments();
+    res.json({ visitorCount: count });
 });
 
 app.get('/api/visitor-list', async (req, res) => {
   try {
-    const doc = await Visitor.findOne({});
-    const ipList = doc?.visits?.map(v => v.ip) || [];
+    const visitors = await Visitor.find({}, 'ip'); // get only 'ip' field
+    const ipList = visitors.map(visitor => visitor.ip);
 
     res.json({ ipList });
   } catch (err) {
@@ -72,14 +63,10 @@ app.get('/api/visitor-list', async (req, res) => {
   }
 });
 
+
 app.get('/', (req, res) => {
   res.json({ work: 'api working' });
 });
-app.get('/visitor-show',async(req,res)=>{
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0];
-  console.log("User IP:", ip);
-  res.json({ status: "success", ip });
-})
 app.listen(port, () => {
   console.log(`✅ Server running at http://localhost:${port}`);
 });
