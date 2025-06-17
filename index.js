@@ -24,15 +24,23 @@ app.post('/api/visitor', async (req, res) => {
       return res.status(400).json({ error: 'IP address is required in the request body' });
     }
 
-    await Visitor.updateOne(
-      {}, // We use a single document to hold all visits
-      { $push: { visits: { ip } } },
-      { upsert: true }
-    );
+    let doc = await Visitor.findOne({});
 
-    const doc = await Visitor.findOne({});
-    const count = doc?.visits?.length || 0;
+    // If no document exists, create one and add the IP
+    if (!doc) {
+      doc = new Visitor({ visits: [{ ip }] });
+      await doc.save();
+    } else {
+      // Check if the IP already exists
+      const alreadyExists = doc.visits.some(v => v.ip === ip);
 
+      if (!alreadyExists) {
+        doc.visits.push({ ip });
+        await doc.save();
+      }
+    }
+
+    const count = doc.visits.length;
     console.log(`✅ Visitor IP recorded: ${ip}`);
 
     res.json({ message: 'IP recorded', visitorCount: count });
@@ -44,11 +52,24 @@ app.post('/api/visitor', async (req, res) => {
 
 
 
+
 // Get count only
 app.get('/api/visitor-count', async (req, res) => {
   const doc = await Visitor.findOne({});
   const count = doc?.visits?.length || 0;
   res.json({ visitorCount: count });
+});
+
+app.get('/api/visitor-list', async (req, res) => {
+  try {
+    const doc = await Visitor.findOne({});
+    const ipList = doc?.visits?.map(v => v.ip) || [];
+
+    res.json({ ipList });
+  } catch (err) {
+    console.error('❌ Error fetching IP list:', err);
+    res.status(500).json({ error: 'Failed to fetch IP list' });
+  }
 });
 
 app.get('/', (req, res) => {
