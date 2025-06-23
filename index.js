@@ -9,7 +9,7 @@ const port = 4000;
 
 
 app.use(cors({
-  origin:["*"]
+  origin:["https://www.shivanshdev.site"]
 }));
 app.use(express.json());
 
