@@ -3,13 +3,13 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const connectDB = require('./mongodb');
 const Visitor = require('./model');
-
+const UAParser = require('ua-parser-js');
 const app = express();
 const port = 4000;
 
 
 app.use(cors({
-    origin:["https://www.shivanshdev.site"]
+  origin:["*"]
 }));
 app.use(express.json());
 
@@ -20,6 +20,8 @@ connectDB();
 app.post('/api/visitor', async (req, res) => {
   try {
     const ip = req.headers["x-forwarded-for"]?.split(",")[0];
+    const parser = new UAParser(req.headers['user-agent']);
+    const result = parser.getResult();
 
     if (!ip) {
       return res.status(400).json({ error: 'IP address is required in the request body' });
@@ -28,11 +30,14 @@ app.post('/api/visitor', async (req, res) => {
     let doc = await Visitor.findOne({ip});
 
     if (!doc) {
-      doc = new Visitor({ip});
+      doc = new Visitor({
+          ip, userAgent: result.ua,
+          uaInfo: result 
+      });
       await doc.save();
     } else {
       // Check if the IP already exists
-      await Visitor.findOneAndUpdate({ip}, { $inc: { count: 1 }, $set: { lastVisited: new Date() } });
+      await Visitor.findOneAndUpdate({ip}, { $inc: { count: 1 }, $set: { lastVisited: new Date() ,userAgent: result.ua,uaInfo: result} });
     }
     res.sendStatus(204); 
   } catch (err) {
