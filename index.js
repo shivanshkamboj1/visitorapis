@@ -193,7 +193,7 @@ app.post('/api/room/ai',async(req,res)=>{
 })
 app.get('/', (req, res) => {
   console.log("api is working" , Date.now())
-  res.json({ work: 'api working' });
+  res.json({ work: 'api working  bith' });
 });
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
