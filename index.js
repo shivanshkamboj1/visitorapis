@@ -16,8 +16,6 @@ app.use(express.json());
 
 
 connectDB();
-
-
 app.post('/api/visitor', async (req, res) => {
   try {
     const ip = req.headers["x-forwarded-for"]?.split(",")[0];
